@@ -1,0 +1,47 @@
+#!/bin/sh
+set -eu
+cd "$(dirname "$0")/.."
+# Reuse Mu's per-user signing configuration and explicit environment override.
+if [ "${MU_SIGN_IDENTITY+x}" = x ]; then
+    identity="$MU_SIGN_IDENTITY"
+elif [ -f "$HOME/.config/mu/signing-identity" ]; then
+    identity="$(cat "$HOME/.config/mu/signing-identity")"
+else
+    identity="-"
+fi
+if [ -z "$identity" ]; then
+    echo "error: signing identity is empty; set MU_SIGN_IDENTITY or ~/.config/mu/signing-identity (use - for ad-hoc)" >&2
+    exit 2
+fi
+if [ "$identity" != "-" ]; then
+    identities="$(security find-identity -v -p codesigning)"
+    if ! printf '%s\n' "$identities" | awk -v identity="$identity" '
+        $2 == identity { found = 1 }
+        { name = $0; sub(/^[^"]*"/, "", name); sub(/"[^"]*$/, "", name); if (name == identity) found = 1 }
+        END { exit !found }
+    '; then
+        echo "error: configured signing identity was not found among valid code-signing identities" >&2
+        exit 2
+    fi
+fi
+swift build -c release
+bin_dir=$(swift build -c release --show-bin-path)
+app="build/Be Here Now.app"
+mkdir -p "$app/Contents/MacOS"
+cp "$bin_dir/BeHereNow" "$app/Contents/MacOS/BeHereNow"
+/usr/libexec/PlistBuddy -c 'Clear dict' "$app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c 'Add :CFBundleExecutable string BeHereNow' "$app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c 'Add :CFBundleIdentifier string com.clearing.beherenow' "$app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c 'Add :CFBundleName string Be Here Now' "$app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c 'Add :CFBundlePackageType string APPL' "$app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c 'Add :CFBundleShortVersionString string 0.1.0' "$app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c 'Add :CFBundleVersion string 1' "$app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c 'Add :LSMinimumSystemVersion string 14.0' "$app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c 'Add :LSUIElement bool true' "$app/Contents/Info.plist"
+if [ "$identity" = "-" ]; then
+    codesign --force --sign - "$app"
+else
+    codesign --force --sign "$identity" --options runtime --timestamp "$app"
+fi
+codesign --verify --strict --verbose=2 "$app"
+printf '%s\n' "$app"

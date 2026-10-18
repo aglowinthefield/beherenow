@@ -1,0 +1,49 @@
+#!/bin/sh
+# Build, sign, notarize, staple, and archive using Mu's credentials.
+set -eu
+cd "$(dirname "$0")/.."
+app="build/Be Here Now.app"
+submission_zip="build/BeHereNow-notarization.zip"
+release_zip="build/BeHereNow.zip"
+release_zip_tmp="build/BeHereNow-release-tmp.zip"
+mkdir -p build
+rm -f "$release_zip"
+
+if [ "${MU_NOTARY_PROFILE+x}" = x ]; then
+    profile="$MU_NOTARY_PROFILE"
+elif [ -f "$HOME/.config/mu/notary-profile" ]; then
+    profile="$(cat "$HOME/.config/mu/notary-profile")"
+else
+    echo "error: set MU_NOTARY_PROFILE or ~/.config/mu/notary-profile to a notarytool keychain profile" >&2
+    exit 2
+fi
+if [ -z "$profile" ]; then
+    echo "error: notary profile is empty" >&2
+    exit 2
+fi
+xcrun notarytool history --keychain-profile "$profile" >/dev/null
+sh scripts/build-app
+if ! codesign -dvvv "$app" 2>&1 | awk '
+    /Authority=Developer ID Application:/ { found = 1 }
+    END { exit !found }
+'; then
+    echo "error: notarization requires Developer ID Application signing" >&2
+    exit 2
+fi
+codesign --verify --deep --strict "$app"
+trap 'rm -f "$submission_zip" "$release_zip_tmp"' 0 1 2 15
+ditto -c -k --keepParent --sequesterRsrc "$app" "$submission_zip"
+result="$(xcrun notarytool submit "$submission_zip" --keychain-profile "$profile" --wait --output-format json)"
+status="$(printf '%s' "$result" | plutil -extract status raw -o - -)"
+if [ "$status" != "Accepted" ]; then
+    echo "error: notarization was not accepted" >&2
+    printf '%s\n' "$result" >&2
+    exit 2
+fi
+printf '%s\n' "$result"
+xcrun stapler staple "$app"
+xcrun stapler validate "$app"
+spctl --assess --type execute --verbose=2 "$app"
+ditto -c -k --keepParent --sequesterRsrc "$app" "$release_zip_tmp"
+mv "$release_zip_tmp" "$release_zip"
+printf '%s\n' "$release_zip"
