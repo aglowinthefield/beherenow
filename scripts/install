@@ -1,0 +1,11 @@
+#!/bin/sh
+# Build, replace /Applications/Be Here Now.app, and relaunch it.
+set -eu
+cd "$(dirname "$0")/.."
+sh scripts/build-app
+dest="/Applications/Be Here Now.app"
+osascript -e 'quit app id "com.clearing.beherenow"' 2>/dev/null || true
+rm -rf "$dest"
+ditto "build/Be Here Now.app" "$dest"
+open "$dest"
+printf '%s\n' "$dest"

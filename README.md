@@ -3,11 +3,12 @@
 A SwiftUI macOS menu bar app that hides applications after they lose focus.
 Requires macOS 14 or later. No third-party dependencies.
 
-The default delay is 60 seconds. Open **Hide delays…** from the eye icon
+The default delay is 60 seconds. Open **Settings…** from the eye icon
 to change it or enable a custom delay for a running application. Delays accept
 seconds or minutes, from one second to 24 hours. Settings survive restarts and
 application relaunches. Turn off an application's custom delay to use the default.
-Opening **Hide delays…** activates Be Here Now and brings settings forward.
+Opening **Settings…** brings the settings window in front of other windows.
+Turn on **Start at login** in settings to launch Be Here Now when you log in.
 Be Here Now excludes itself from automatic hiding.
 
 Hiding affects all windows of an application, like Command-H. It does not close
@@ -20,9 +21,12 @@ Timers restart after wake or returning to the user session.
 With Xcode installed, run these commands from the project directory (fish compatible).
 
 ```fish
-sh scripts/build-app
-open 'build/Be Here Now.app'
+sh scripts/install
 ```
+
+This builds the app, quits any running copy, replaces `/Applications/Be Here Now.app`,
+and launches it. To build without installing, run `sh scripts/build-app`, which writes
+`build/Be Here Now.app`.
 
 The script builds for the current Mac's architecture. It reuses Mu's signing
 configuration: `MU_SIGN_IDENTITY`, then `~/.config/mu/signing-identity`, then
