@@ -1,3 +1,4 @@
+import ServiceManagement
 import SwiftUI
 
 @main
@@ -18,13 +19,24 @@ private struct FocusMenu: View {
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
-        Button("Hide delays…") {
-            NSApplication.shared.activate()
+        Button("Settings…") {
             openSettings()
+            // The settings window may not exist until the next run loop pass.
+            DispatchQueue.main.async(execute: bringSettingsForward)
         }
+        .keyboardShortcut(",")
         Divider()
         Button("Quit Be Here Now") { NSApplication.shared.terminate(nil) }
             .keyboardShortcut("q")
+    }
+}
+
+/// Accessory apps don't reliably come forward on activation, so order the window front explicitly.
+@MainActor private func bringSettingsForward() {
+    NSApplication.shared.activate()
+    for window in NSApplication.shared.windows where window.canBecomeMain && window.isVisible {
+        window.makeKeyAndOrderFront(nil)
+        window.orderFrontRegardless()
     }
 }
 
@@ -33,6 +45,7 @@ private struct DelaySettings: View {
 
     var body: some View {
         Form {
+            LoginItemSection()
             Section {
                 DelayEditor(title: "Default delay", seconds: $controller.defaultDelay)
             } footer: {
@@ -74,7 +87,40 @@ private struct DelaySettings: View {
         }
         .formStyle(.grouped)
         .frame(width: 480, height: 520)
-        .onAppear { NSApplication.shared.activate() }
+        .onAppear(perform: bringSettingsForward)
+    }
+}
+
+private struct LoginItemSection: View {
+    @State private var status = SMAppService.mainApp.status
+    @State private var failure: String?
+
+    var body: some View {
+        Section {
+            Toggle("Start at login", isOn: Binding(
+                get: { status == .enabled || status == .requiresApproval },
+                set: { enabled in
+                    do {
+                        if enabled {
+                            try SMAppService.mainApp.register()
+                        } else {
+                            try SMAppService.mainApp.unregister()
+                        }
+                        failure = nil
+                    } catch {
+                        failure = error.localizedDescription
+                    }
+                    status = SMAppService.mainApp.status
+                }
+            ))
+        } footer: {
+            if let failure {
+                Text(failure).foregroundStyle(.red)
+            } else if status == .requiresApproval {
+                Text("Allow Be Here Now in System Settings > General > Login Items.")
+            }
+        }
+        .onAppear { status = SMAppService.mainApp.status }
     }
 }
 
