@@ -1,5 +1,7 @@
 # Be Here Now
 
+<p align="center"><img src="docs/be-here-now.gif" alt="Glowing hands held up against the clouds" width="240"></p>
+
 A SwiftUI macOS menu bar app that hides applications after they lose focus.
 Requires macOS 14 or later. No third-party dependencies.
 
@@ -40,6 +42,10 @@ To explicitly request an ad-hoc development build (fish compatible):
 ```fish
 env MU_SIGN_IDENTITY=- sh scripts/build-app
 ```
+
+The app icon is drawn in `Resources/AppIcon.svg`. After editing it, run `sh scripts/icon`
+to regenerate the committed `Resources/AppIcon.icns`. This needs `rsvg-convert`
+(`brew install librsvg`); building the app does not.
 
 For development, open `Package.swift` in Xcode. Run tests with `swift test`.
 
