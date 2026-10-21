@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+cd "$(dirname "$0")/.."
+# Regenerates the committed Resources/AppIcon.icns from Resources/AppIcon.svg.
+# Needs rsvg-convert (brew install librsvg); building the app does not.
+iconset="$(mktemp -d)/AppIcon.iconset"
+mkdir "$iconset"
+for size in 16 32 128 256 512; do
+    rsvg-convert -w "$size" -h "$size" Resources/AppIcon.svg -o "$iconset/icon_${size}x${size}.png"
+    rsvg-convert -w $((size * 2)) -h $((size * 2)) Resources/AppIcon.svg -o "$iconset/icon_${size}x${size}@2x.png"
+done
+iconutil -c icns "$iconset" -o Resources/AppIcon.icns
+printf '%s\n' Resources/AppIcon.icns
