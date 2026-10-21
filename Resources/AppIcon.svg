@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#DCE8F2"/>
+      <stop offset="1" stop-color="#A7BFD6"/>
+    </linearGradient>
+  </defs>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#sky)"/>
+  <g stroke-linejoin="round" stroke-linecap="round">
+    <!-- White cat's ears, under the circle so its outline crosses their bases. -->
+    <path d="M400.9 750.2 L474.5 797.1 L379.5 869 Z M623.1 750.2 L549.5 797.1 L644.5 869 Z"
+          fill="#fff" stroke="#111" stroke-width="16"/>
+    <!-- Black cat's ears. -->
+    <path d="M400.9 273.8 L474.5 226.9 L379.5 155 Z M623.1 273.8 L549.5 226.9 L644.5 155 Z"
+          fill="#111" stroke="#111" stroke-width="16"/>
+    <circle cx="512" cy="512" r="290" fill="#fff" stroke="#111" stroke-width="16"/>
+    <!-- Black cat: left half plus the top head, minus the white cat's head. -->
+    <path d="M512 222 A290 290 0 0 0 512 802 A145 145 0 0 1 512 512 A145 145 0 0 0 512 222 Z"
+          fill="#111"/>
+    <!-- Faces: closed eyes and a nose; the white cat is upside down. -->
+    <path d="M437 362 Q462 390 487 362 M537 362 Q562 390 587 362"
+          fill="none" stroke="#fff" stroke-width="13"/>
+    <path d="M500 410 L524 410 L512 424 Z" fill="#F2A7B5" stroke="#F2A7B5" stroke-width="8"/>
+    <path d="M437 662 Q462 634 487 662 M537 662 Q562 634 587 662"
+          fill="none" stroke="#111" stroke-width="13"/>
+    <path d="M500 614 L524 614 L512 600 Z" fill="#F2A7B5" stroke="#F2A7B5" stroke-width="8"/>
+  </g>
+</svg>

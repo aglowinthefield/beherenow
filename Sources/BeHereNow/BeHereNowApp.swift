@@ -55,23 +55,23 @@ private struct DelaySettings: View {
                 ForEach(controller.applications, id: \.processIdentifier) { app in
                     if let identifier = app.bundleIdentifier {
                         VStack(alignment: .leading, spacing: 8) {
-                            Toggle(isOn: Binding(
-                                get: { controller.overrides[identifier] != nil },
-                                set: { enabled in
-                                    controller.overrides[identifier] = enabled ? controller.defaultDelay : nil
-                                }
+                            Picker(selection: Binding(
+                                get: { HideRule(identifier, in: controller) },
+                                set: { $0.apply(to: identifier, in: controller) }
                             )) {
+                                Text("Default").tag(HideRule.standard)
+                                Text("Custom").tag(HideRule.custom)
+                                Text("Never hide").tag(HideRule.never)
+                            } label: {
                                 HStack {
                                     if let icon = app.icon {
                                         Image(nsImage: icon).resizable().frame(width: 24, height: 24)
                                     }
                                     Text(app.localizedName ?? identifier)
-                                    Spacer()
-                                    Text(controller.overrides[identifier] == nil ? "Default" : "Custom")
-                                        .foregroundStyle(.secondary)
                                 }
                             }
-                            if controller.overrides[identifier] != nil {
+                            .pickerStyle(.menu)
+                            if HideRule(identifier, in: controller) == .custom {
                                 DelayEditor(title: "Hide after", seconds: Binding(
                                     get: { controller.overrides[identifier] ?? controller.defaultDelay },
                                     set: { controller.overrides[identifier] = $0 }
@@ -88,6 +88,29 @@ private struct DelaySettings: View {
         .formStyle(.grouped)
         .frame(width: 480, height: 520)
         .onAppear(perform: bringSettingsForward)
+    }
+}
+
+private enum HideRule {
+    case standard, custom, never
+
+    @MainActor init(_ identifier: String, in controller: FocusController) {
+        if controller.neverHide.contains(identifier) {
+            self = .never
+        } else {
+            self = controller.overrides[identifier] == nil ? .standard : .custom
+        }
+    }
+
+    @MainActor func apply(to identifier: String, in controller: FocusController) {
+        if self == .never {
+            controller.neverHide.insert(identifier)
+        } else {
+            controller.neverHide.remove(identifier)
+        }
+        controller.overrides[identifier] = self == .custom
+            ? controller.overrides[identifier] ?? controller.defaultDelay
+            : nil
     }
 }
 

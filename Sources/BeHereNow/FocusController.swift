@@ -9,6 +9,9 @@ final class FocusController {
     var overrides: [String: Double] {
         didSet { defaults.set(overrides, forKey: "applicationDelays") }
     }
+    var neverHide: Set<String> {
+        didSet { defaults.set(neverHide.sorted(), forKey: "neverHideApplications") }
+    }
     private(set) var applications: [NSRunningApplication] = []
     private(set) var hideFailure: String?
     private let defaults: UserDefaults
@@ -25,6 +28,7 @@ final class FocusController {
                 guard let seconds = value as? Double, seconds.isFinite, seconds > 0 else { return nil }
                 return seconds
             }
+        neverHide = Set(defaults.stringArray(forKey: "neverHideApplications") ?? [])
         refresh()
         resetTimers()
         let workspace = NSWorkspace.shared
@@ -64,6 +68,11 @@ final class FocusController {
         }
     }
 
+    /// The time out of focus before an application hides, or nil if it never hides.
+    func delay(for identifier: String) -> Double? {
+        neverHide.contains(identifier) ? nil : overrides[identifier] ?? defaultDelay
+    }
+
     private func refresh() {
         applications = NSWorkspace.shared.runningApplications.filter {
             $0.activationPolicy == .regular
@@ -99,7 +108,8 @@ final class FocusController {
             guard !app.isHidden, !app.isTerminated,
                   app.processIdentifier != NSWorkspace.shared.frontmostApplication?.processIdentifier,
                   let identifier = app.bundleIdentifier,
-                  inactivity.isDue(app.processIdentifier, delay: overrides[identifier] ?? defaultDelay, at: now)
+                  let delay = delay(for: identifier),
+                  inactivity.isDue(app.processIdentifier, delay: delay, at: now)
             else { continue }
             if app.hide() {
                 inactivity.focus(app.processIdentifier)

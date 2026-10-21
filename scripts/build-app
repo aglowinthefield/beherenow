@@ -27,10 +27,12 @@ fi
 swift build -c release
 bin_dir=$(swift build -c release --show-bin-path)
 app="build/Be Here Now.app"
-mkdir -p "$app/Contents/MacOS"
+mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin_dir/BeHereNow" "$app/Contents/MacOS/BeHereNow"
+cp Resources/AppIcon.icns "$app/Contents/Resources/AppIcon.icns"
 /usr/libexec/PlistBuddy -c 'Clear dict' "$app/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Add :CFBundleExecutable string BeHereNow' "$app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c 'Add :CFBundleIconFile string AppIcon' "$app/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Add :CFBundleIdentifier string com.clearing.beherenow' "$app/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Add :CFBundleName string Be Here Now' "$app/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Add :CFBundlePackageType string APPL' "$app/Contents/Info.plist"
