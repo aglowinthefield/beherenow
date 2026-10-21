@@ -1,37 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1024 1024">
   <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#DCE8F2"/>
-      <stop offset="1" stop-color="#A7BFD6"/>
-    </linearGradient>
+    <clipPath id="tile"><rect x="100" y="100" width="824" height="824" rx="185"/></clipPath>
   </defs>
-  <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#sky)"/>
-  <!-- Two cats curled into a yin-yang. Drawn in a 736 x 776 space, then scaled onto the tile. -->
-  <g transform="translate(167 152) scale(0.9)">
-  <g stroke-linecap="round" stroke-linejoin="round">
-    <circle cx="383" cy="393" r="335" fill="#fff" stroke="#111" stroke-width="9"/>
-    <!-- Black cat: head at the top, back sweeping down the left side to the white cat's head. -->
-    <path fill="#111" d="M213 72 Q240 85 262 100 Q340 80 418 98 Q450 80 476 74 Q492 140 482 190
-      Q474 250 428 278 Q400 292 392 300 C400 340 432 380 412 436 C390 485 350 540 346 610
-      C342 660 360 700 400 727 A335 335 0 0 1 48 393 A335 335 0 0 1 120 180 Q160 110 213 72 Z"/>
-    <!-- White tail curling into the black cat's side. -->
-    <path fill="#fff" d="M52 325 Q78 418 150 432 Q222 442 226 392 Q224 350 182 352 Q118 362 52 325 Z"/>
-    <!-- Black cat's tail curling down the right edge. -->
-    <path fill="#111" d="M574 440 C568 405 615 398 648 418 C705 455 725 525 708 585 C698 625 662 655 628 645
-      C655 605 662 545 634 505 C612 478 580 470 574 440 Z"/>
-    <!-- Black cat's face: crescent moon, closed eyes, nose, whiskers. -->
-    <path fill="#fff" d="M376 160 A25 25 0 1 0 382 208 A20 20 0 1 1 376 160 Z"/>
-    <path fill="none" stroke="#fff" stroke-width="7" d="M298 212 Q320 226 342 218 M402 216 Q424 222 446 206"/>
-    <path fill="#F2A7B5" d="M359 252 L387 252 L373 269 Z"/>
-    <path fill="none" stroke="#fff" stroke-width="3" d="M332 252 L268 244 M334 263 L272 270 M414 250 L474 238 M414 261 L470 266"/>
-    <!-- White cat, lying head-down: ear, tabby stripes, sun, closed eye, nose, whiskers. -->
-    <path fill="none" stroke="#111" stroke-width="7" d="M408 458 L462 432 L482 506"/>
-    <path fill="none" stroke="#111" stroke-width="6" d="M376 586 Q368 600 378 614 M394 580 Q386 596 396 612 M412 584 Q406 598 414 610"/>
-    <circle cx="466" cy="602" r="16" fill="#111"/>
-    <path fill="none" stroke="#111" stroke-width="4" d="M466 572 V580 M466 624 V632 M436 602 H444 M488 602 H496 M445 581 L450 586 M482 618 L487 623 M487 581 L482 586 M450 618 L445 623"/>
-    <path fill="none" stroke="#111" stroke-width="7" d="M418 668 Q440 680 464 672"/>
-    <path fill="#111" d="M352 662 L376 650 L371 678 Z"/>
-    <path fill="none" stroke="#111" stroke-width="3" d="M384 690 L392 742 M398 688 L416 736 M560 610 L632 628 M556 622 L624 654"/>
-  </g>
-  </g>
+  <rect x="100" y="100" width="824" height="824" rx="185" fill="#fff"/>
+  <!-- The yin-yang cats picture, on a white background that matches the tile. -->
+  <image xlink:href="AppIcon.jpg" x="152" y="152" width="720" height="720" clip-path="url(#tile)"/>
 </svg>
