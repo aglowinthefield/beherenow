@@ -6,23 +6,32 @@
     </linearGradient>
   </defs>
   <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#sky)"/>
-  <g stroke-linejoin="round" stroke-linecap="round">
-    <!-- White cat's ears, under the circle so its outline crosses their bases. -->
-    <path d="M400.9 750.2 L474.5 797.1 L379.5 869 Z M623.1 750.2 L549.5 797.1 L644.5 869 Z"
-          fill="#fff" stroke="#111" stroke-width="16"/>
-    <!-- Black cat's ears. -->
-    <path d="M400.9 273.8 L474.5 226.9 L379.5 155 Z M623.1 273.8 L549.5 226.9 L644.5 155 Z"
-          fill="#111" stroke="#111" stroke-width="16"/>
-    <circle cx="512" cy="512" r="290" fill="#fff" stroke="#111" stroke-width="16"/>
-    <!-- Black cat: left half plus the top head, minus the white cat's head. -->
-    <path d="M512 222 A290 290 0 0 0 512 802 A145 145 0 0 1 512 512 A145 145 0 0 0 512 222 Z"
-          fill="#111"/>
-    <!-- Faces: closed eyes and a nose; the white cat is upside down. -->
-    <path d="M437 362 Q462 390 487 362 M537 362 Q562 390 587 362"
-          fill="none" stroke="#fff" stroke-width="13"/>
-    <path d="M500 410 L524 410 L512 424 Z" fill="#F2A7B5" stroke="#F2A7B5" stroke-width="8"/>
-    <path d="M437 662 Q462 634 487 662 M537 662 Q562 634 587 662"
-          fill="none" stroke="#111" stroke-width="13"/>
-    <path d="M500 614 L524 614 L512 600 Z" fill="#F2A7B5" stroke="#F2A7B5" stroke-width="8"/>
+  <!-- Two cats curled into a yin-yang. Drawn in a 736 x 776 space, then scaled onto the tile. -->
+  <g transform="translate(167 152) scale(0.9)">
+  <g stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="383" cy="393" r="335" fill="#fff" stroke="#111" stroke-width="9"/>
+    <!-- Black cat: head at the top, back sweeping down the left side to the white cat's head. -->
+    <path fill="#111" d="M213 72 Q240 85 262 100 Q340 80 418 98 Q450 80 476 74 Q492 140 482 190
+      Q474 250 428 278 Q400 292 392 300 C400 340 432 380 412 436 C390 485 350 540 346 610
+      C342 660 360 700 400 727 A335 335 0 0 1 48 393 A335 335 0 0 1 120 180 Q160 110 213 72 Z"/>
+    <!-- White tail curling into the black cat's side. -->
+    <path fill="#fff" d="M52 325 Q78 418 150 432 Q222 442 226 392 Q224 350 182 352 Q118 362 52 325 Z"/>
+    <!-- Black cat's tail curling down the right edge. -->
+    <path fill="#111" d="M574 440 C568 405 615 398 648 418 C705 455 725 525 708 585 C698 625 662 655 628 645
+      C655 605 662 545 634 505 C612 478 580 470 574 440 Z"/>
+    <!-- Black cat's face: crescent moon, closed eyes, nose, whiskers. -->
+    <path fill="#fff" d="M376 160 A25 25 0 1 0 382 208 A20 20 0 1 1 376 160 Z"/>
+    <path fill="none" stroke="#fff" stroke-width="7" d="M298 212 Q320 226 342 218 M402 216 Q424 222 446 206"/>
+    <path fill="#F2A7B5" d="M359 252 L387 252 L373 269 Z"/>
+    <path fill="none" stroke="#fff" stroke-width="3" d="M332 252 L268 244 M334 263 L272 270 M414 250 L474 238 M414 261 L470 266"/>
+    <!-- White cat, lying head-down: ear, tabby stripes, sun, closed eye, nose, whiskers. -->
+    <path fill="none" stroke="#111" stroke-width="7" d="M408 458 L462 432 L482 506"/>
+    <path fill="none" stroke="#111" stroke-width="6" d="M376 586 Q368 600 378 614 M394 580 Q386 596 396 612 M412 584 Q406 598 414 610"/>
+    <circle cx="466" cy="602" r="16" fill="#111"/>
+    <path fill="none" stroke="#111" stroke-width="4" d="M466 572 V580 M466 624 V632 M436 602 H444 M488 602 H496 M445 581 L450 586 M482 618 L487 623 M487 581 L482 586 M450 618 L445 623"/>
+    <path fill="none" stroke="#111" stroke-width="7" d="M418 668 Q440 680 464 672"/>
+    <path fill="#111" d="M352 662 L376 650 L371 678 Z"/>
+    <path fill="none" stroke="#111" stroke-width="3" d="M384 690 L392 742 M398 688 L416 736 M560 610 L632 628 M556 622 L624 654"/>
+  </g>
   </g>
 </svg>
