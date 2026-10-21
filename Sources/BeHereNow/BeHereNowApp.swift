@@ -6,8 +6,11 @@ struct BeHereNowApp: App {
     @State private var controller = FocusController()
 
     var body: some Scene {
-        MenuBarExtra("Be Here Now", systemImage: "eye") {
+        MenuBarExtra {
             FocusMenu()
+        } label: {
+            Image(systemName: controller.blinking ? "eye.half.closed" : "eye")
+                .accessibilityLabel("Be Here Now")
         }
         Settings {
             DelaySettings(controller: controller)

@@ -14,6 +14,8 @@ final class FocusController {
     }
     private(set) var applications: [NSRunningApplication] = []
     private(set) var hideFailure: String?
+    /// Briefly true after an application hides, so the menu bar icon can blink.
+    private(set) var blinking = false
     private let defaults: UserDefaults
     private var inactivity = Inactivity()
     private var focusedPID: Int32?
@@ -114,10 +116,19 @@ final class FocusController {
             if app.hide() {
                 inactivity.focus(app.processIdentifier)
                 hideFailure = nil
+                blink()
             } else {
                 hideFailure = "Could not hide \(app.localizedName ?? identifier)."
                 inactivity.leave(app.processIdentifier, at: now)
             }
+        }
+    }
+
+    private func blink() {
+        blinking = true
+        Task { @MainActor [weak self] in
+            try? await Task.sleep(for: .milliseconds(250))
+            self?.blinking = false
         }
     }
 }

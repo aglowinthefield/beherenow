@@ -12,7 +12,8 @@ Turn on **Start at login** in settings to launch Be Here Now when you log in.
 Be Here Now excludes itself from automatic hiding.
 
 Hiding affects all windows of an application, like Command-H. It does not close
-windows or quit applications. Returning to an application resets its timer.
+windows or quit applications. The menu bar eye blinks each time an application
+hides. Returning to an application resets its timer.
 Existing inactive applications start their timers when Be Here Now launches.
 Timers restart after wake or returning to the user session.
 
