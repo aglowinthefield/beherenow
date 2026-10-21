@@ -127,7 +127,7 @@ final class FocusController {
     private func blink() {
         blinking = true
         Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .milliseconds(250))
+            try? await Task.sleep(for: .milliseconds(600))
             self?.blinking = false
         }
     }
