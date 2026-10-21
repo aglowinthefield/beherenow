@@ -113,13 +113,19 @@ final class FocusController {
                   let delay = delay(for: identifier),
                   inactivity.isDue(app.processIdentifier, delay: delay, at: now)
             else { continue }
-            if app.hide() {
-                inactivity.focus(app.processIdentifier)
-                hideFailure = nil
-                blink()
-            } else {
-                hideFailure = "Could not hide \(app.localizedName ?? identifier)."
-                inactivity.leave(app.processIdentifier, at: now)
+            // hide() returns false on macOS 26 even when the application hides, so check isHidden instead.
+            app.hide()
+            inactivity.focus(app.processIdentifier)
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .milliseconds(200))
+                guard let self, !app.isTerminated, !app.isActive else { return }
+                if app.isHidden {
+                    self.hideFailure = nil
+                    self.blink()
+                } else {
+                    self.hideFailure = "Could not hide \(app.localizedName ?? identifier)."
+                    self.inactivity.leave(app.processIdentifier, at: ProcessInfo.processInfo.systemUptime)
+                }
             }
         }
     }
@@ -127,7 +133,7 @@ final class FocusController {
     private func blink() {
         blinking = true
         Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .milliseconds(250))
+            try? await Task.sleep(for: .milliseconds(600))
             self?.blinking = false
         }
     }
