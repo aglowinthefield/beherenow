@@ -24,8 +24,11 @@ if [ "$identity" != "-" ]; then
         exit 2
     fi
 fi
-swift build -c release
-bin_dir=$(swift build -c release --show-bin-path)
+version="$(cat VERSION)"
+build_number="$(git rev-list --count HEAD)"
+# Universal so one release runs on Apple silicon and Intel Macs.
+swift build -c release --arch arm64 --arch x86_64
+bin_dir=$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)
 app="build/Be Here Now.app"
 mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
 cp "$bin_dir/BeHereNow" "$app/Contents/MacOS/BeHereNow"
@@ -36,8 +39,8 @@ cp Resources/AppIcon.icns "$app/Contents/Resources/AppIcon.icns"
 /usr/libexec/PlistBuddy -c 'Add :CFBundleIdentifier string com.clearing.beherenow' "$app/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Add :CFBundleName string Be Here Now' "$app/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Add :CFBundlePackageType string APPL' "$app/Contents/Info.plist"
-/usr/libexec/PlistBuddy -c 'Add :CFBundleShortVersionString string 0.1.0' "$app/Contents/Info.plist"
-/usr/libexec/PlistBuddy -c 'Add :CFBundleVersion string 1' "$app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c 'Add :CFBundleShortVersionString string '"$version" "$app/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c 'Add :CFBundleVersion string '"$build_number" "$app/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Add :LSMinimumSystemVersion string 14.0' "$app/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Add :LSUIElement bool true' "$app/Contents/Info.plist"
 if [ "$identity" = "-" ]; then
