@@ -21,8 +21,10 @@ final class FocusController {
     }
     private(set) var applications: [NSRunningApplication] = []
     private(set) var hideFailure: String?
-    /// Briefly true after an application hides, so the menu bar icon can blink.
-    private(set) var blinking = false
+    /// Menu bar icon rotation in degrees. Each hide turns it a further 180°.
+    private(set) var iconAngle: Double = 0
+    private var iconTarget: Double = 0
+    private var spinning = false
     private let defaults: UserDefaults
     private var inactivity = Inactivity()
     private var focusedPID: Int32?
@@ -132,7 +134,7 @@ final class FocusController {
                 guard let self, !app.isTerminated, !app.isActive else { return }
                 if app.isHidden {
                     self.hideFailure = nil
-                    self.blink()
+                    self.spin()
                 } else {
                     self.hideFailure = "Could not hide \(app.localizedName ?? identifier)."
                     self.inactivity.leave(app.processIdentifier, at: ProcessInfo.processInfo.systemUptime)
@@ -141,11 +143,17 @@ final class FocusController {
         }
     }
 
-    private func blink() {
-        blinking = true
+    /// Steps the icon through a half turn. Hides during a spin extend it by another half turn.
+    private func spin() {
+        iconTarget += 180
+        guard !spinning else { return }
+        spinning = true
         Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .milliseconds(600))
-            self?.blinking = false
+            while let self, self.iconAngle < self.iconTarget {
+                try? await Task.sleep(for: .milliseconds(16))
+                self.iconAngle = min(self.iconTarget, self.iconAngle + 12)
+            }
+            self?.spinning = false
         }
     }
 }

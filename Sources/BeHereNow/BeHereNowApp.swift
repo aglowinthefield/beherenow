@@ -9,7 +9,8 @@ struct BeHereNowApp: App {
         MenuBarExtra {
             FocusMenu(controller: controller)
         } label: {
-            Image(systemName: controller.blinking ? "eye.half.closed" : "eye")
+            // MenuBarExtra labels don't animate, so the controller steps the angle frame by frame.
+            Image(nsImage: yinYangImage(rotatedBy: controller.iconAngle))
                 .accessibilityLabel("Be Here Now")
         }
         Settings {
