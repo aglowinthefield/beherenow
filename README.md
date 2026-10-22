@@ -25,7 +25,13 @@ Timers restart after wake or returning to the user session.
 
 ## Install
 
-Download `BeHereNow.zip` from the
+With [Homebrew](https://brew.sh):
+
+```sh
+brew install --cask aglowinthefield/tap/be-here-now
+```
+
+Or download `BeHereNow.zip` from the
 [latest release](https://github.com/aglowinthefield/beherenow/releases/latest),
 unzip it, and drag **Be Here Now** to your Applications folder. Open it and the
 yin-yang appears in the menu bar. Releases are signed and notarized by Apple and
@@ -79,6 +85,10 @@ set version (cat VERSION)
 git tag v$version; and git push origin v$version
 gh release create v$version build/BeHereNow.zip --title "Be Here Now $version"
 ```
+
+Then update `version` and `sha256` in `Casks/be-here-now.rb` in
+[aglowinthefield/homebrew-tap](https://github.com/aglowinthefield/homebrew-tap).
+`shasum -a 256 build/BeHereNow.zip` prints the checksum.
 
 ### Manual verification
 
