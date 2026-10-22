@@ -5,17 +5,19 @@
 A SwiftUI macOS menu bar app that hides applications after they lose focus.
 Requires macOS 14 or later. No third-party dependencies.
 
-The default delay is 60 seconds. Open **Settings…** from the eye icon
+The default delay is 60 seconds. Open **Settings…** from the yin-yang icon
 to change it. Each running application can use the default, a custom delay, or
 **Never hide**. Delays accept seconds or minutes, from one second to 24 hours.
 Settings survive restarts and application relaunches.
+Turn on **Zazen mode** from the menu or settings to hide applications the moment
+they lose focus, ignoring all delays. **Never hide** applications still stay visible.
 Opening **Settings…** brings the settings window in front of other windows.
 Turn on **Start at login** in settings to launch Be Here Now when you log in.
 Be Here Now excludes itself from automatic hiding.
 
 Hiding affects all windows of an application, like Command-H. It does not close
-windows or quit applications. The menu bar eye blinks each time an application
-hides. Returning to an application resets its timer.
+windows or quit applications. The menu bar yin-yang turns 180° each time an
+application hides. Returning to an application resets its timer.
 Existing inactive applications start their timers when Be Here Now launches.
 Timers restart after wake or returning to the user session.
 
