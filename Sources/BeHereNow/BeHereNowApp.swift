@@ -7,7 +7,7 @@ struct BeHereNowApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            FocusMenu()
+            FocusMenu(controller: controller)
         } label: {
             Image(systemName: controller.blinking ? "eye.half.closed" : "eye")
                 .accessibilityLabel("Be Here Now")
@@ -19,9 +19,11 @@ struct BeHereNowApp: App {
 }
 
 private struct FocusMenu: View {
+    @Bindable var controller: FocusController
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
+        Toggle("Zazen mode", isOn: $controller.zazenMode)
         Button("Settings…") {
             openSettings()
             // The settings window may not exist until the next run loop pass.
@@ -50,7 +52,13 @@ private struct DelaySettings: View {
         Form {
             LoginItemSection()
             Section {
+                Toggle("Zazen mode", isOn: $controller.zazenMode)
+            } footer: {
+                Text("Hide applications the moment they lose focus, ignoring delays. Never hide still applies.")
+            }
+            Section {
                 DelayEditor(title: "Default delay", seconds: $controller.defaultDelay)
+                    .disabled(controller.zazenMode)
             } footer: {
                 Text("Applications hide after this much time out of focus. Returning to an application restarts its timer.")
             }
@@ -79,6 +87,7 @@ private struct DelaySettings: View {
                                     get: { controller.overrides[identifier] ?? controller.defaultDelay },
                                     set: { controller.overrides[identifier] = $0 }
                                 ))
+                                .disabled(controller.zazenMode)
                             }
                         }
                     }

@@ -12,6 +12,13 @@ final class FocusController {
     var neverHide: Set<String> {
         didSet { defaults.set(neverHide.sorted(), forKey: "neverHideApplications") }
     }
+    /// When true, applications hide the moment they lose focus. Never hide still applies.
+    var zazenMode: Bool {
+        didSet {
+            defaults.set(zazenMode, forKey: "zazenMode")
+            if zazenMode { hideExpiredApplications() }
+        }
+    }
     private(set) var applications: [NSRunningApplication] = []
     private(set) var hideFailure: String?
     /// Briefly true after an application hides, so the menu bar icon can blink.
@@ -31,6 +38,7 @@ final class FocusController {
                 return seconds
             }
         neverHide = Set(defaults.stringArray(forKey: "neverHideApplications") ?? [])
+        zazenMode = defaults.bool(forKey: "zazenMode")
         refresh()
         resetTimers()
         let workspace = NSWorkspace.shared
@@ -58,6 +66,8 @@ final class FocusController {
                             self.inactivity.leave(pid, at: ProcessInfo.processInfo.systemUptime)
                         }
                     }
+                    // Zazen mode can't wait for the next one-second tick.
+                    if self.zazenMode { self.hideExpiredApplications() }
                 }
             })
         }
@@ -72,7 +82,8 @@ final class FocusController {
 
     /// The time out of focus before an application hides, or nil if it never hides.
     func delay(for identifier: String) -> Double? {
-        neverHide.contains(identifier) ? nil : overrides[identifier] ?? defaultDelay
+        if neverHide.contains(identifier) { return nil }
+        return zazenMode ? 0 : overrides[identifier] ?? defaultDelay
     }
 
     private func refresh() {

@@ -9,6 +9,8 @@ The default delay is 60 seconds. Open **Settings…** from the eye icon
 to change it. Each running application can use the default, a custom delay, or
 **Never hide**. Delays accept seconds or minutes, from one second to 24 hours.
 Settings survive restarts and application relaunches.
+Turn on **Zazen mode** from the menu or settings to hide applications the moment
+they lose focus, ignoring all delays. **Never hide** applications still stay visible.
 Opening **Settings…** brings the settings window in front of other windows.
 Turn on **Start at login** in settings to launch Be Here Now when you log in.
 Be Here Now excludes itself from automatic hiding.
