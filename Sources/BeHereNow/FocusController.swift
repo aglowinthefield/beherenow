@@ -26,8 +26,7 @@ final class FocusController {
     private var iconTarget: Double = 0
     private var spinning = false
     private let defaults: UserDefaults
-    private var inactivity = Inactivity()
-    private var focusedPID: Int32?
+    private var scheduler = HideScheduler()
     private var observers: [NSObjectProtocol] = []
 
     init(defaults: UserDefaults = .standard) {
@@ -42,7 +41,7 @@ final class FocusController {
         neverHide = Set(defaults.stringArray(forKey: "neverHideApplications") ?? [])
         zazenMode = defaults.bool(forKey: "zazenMode")
         refresh()
-        resetTimers()
+        scheduler.handle(.woke, in: snapshot())
         let workspace = NSWorkspace.shared
         for name in [NSWorkspace.didActivateApplicationNotification,
                      NSWorkspace.didLaunchApplicationNotification,
@@ -54,20 +53,11 @@ final class FocusController {
                 forName: name, object: nil, queue: .main
             ) { [weak self] notification in
                 let pid = (notification.userInfo?[NSWorkspace.applicationUserInfoKey] as? NSRunningApplication)?.processIdentifier
-                let event = notification.name
+                let event = Self.event(for: notification.name, pid: pid)
                 Task { @MainActor [weak self] in
                     guard let self else { return }
                     self.refresh()
-                    if event == NSWorkspace.didWakeNotification || event == NSWorkspace.sessionDidBecomeActiveNotification {
-                        self.resetTimers()
-                    } else if event == NSWorkspace.didActivateApplicationNotification {
-                        self.updateFocus()
-                    } else if let pid {
-                        self.inactivity.focus(pid)
-                        if event != NSWorkspace.didTerminateApplicationNotification && pid != self.focusedPID {
-                            self.inactivity.leave(pid, at: ProcessInfo.processInfo.systemUptime)
-                        }
-                    }
+                    if let event { self.scheduler.handle(event, in: self.snapshot()) }
                     // Zazen mode can't wait for the next one-second tick.
                     if self.zazenMode { self.hideExpiredApplications() }
                 }
@@ -97,38 +87,34 @@ final class FocusController {
         }.sorted { ($0.localizedName ?? "").localizedStandardCompare($1.localizedName ?? "") == .orderedAscending }
     }
 
-    private func resetTimers() {
-        inactivity.reset()
-        focusedPID = NSWorkspace.shared.frontmostApplication?.processIdentifier
-        let now = ProcessInfo.processInfo.systemUptime
-        for app in applications where app.processIdentifier != focusedPID && !app.isHidden {
-            inactivity.leave(app.processIdentifier, at: now)
+    private nonisolated static func event(for name: Notification.Name, pid: Int32?) -> HideScheduler.Event? {
+        switch name {
+        case NSWorkspace.didWakeNotification, NSWorkspace.sessionDidBecomeActiveNotification: .woke
+        case NSWorkspace.didActivateApplicationNotification: .activated
+        case NSWorkspace.didLaunchApplicationNotification: pid.map(HideScheduler.Event.launched)
+        case NSWorkspace.didUnhideApplicationNotification: pid.map(HideScheduler.Event.unhidden)
+        case NSWorkspace.didTerminateApplicationNotification: pid.map(HideScheduler.Event.terminated)
+        default: nil
         }
     }
 
-    private func updateFocus() {
-        let next = NSWorkspace.shared.frontmostApplication?.processIdentifier
-        guard next != focusedPID else { return }
-        if let previous = focusedPID {
-            inactivity.leave(previous, at: ProcessInfo.processInfo.systemUptime)
-        }
-        if let next { inactivity.focus(next) }
-        focusedPID = next
+    private func snapshot() -> WorkspaceSnapshot {
+        WorkspaceSnapshot(
+            frontmost: NSWorkspace.shared.frontmostApplication?.processIdentifier,
+            applications: applications.compactMap { app in
+                guard !app.isTerminated, let identifier = app.bundleIdentifier else { return nil }
+                return ScheduledApp(pid: app.processIdentifier, bundleIdentifier: identifier, isHidden: app.isHidden)
+            },
+            now: ProcessInfo.processInfo.systemUptime
+        )
     }
 
     private func hideExpiredApplications() {
-        updateFocus()
-        let now = ProcessInfo.processInfo.systemUptime
-        for app in applications {
-            guard !app.isHidden, !app.isTerminated,
-                  app.processIdentifier != NSWorkspace.shared.frontmostApplication?.processIdentifier,
-                  let identifier = app.bundleIdentifier,
-                  let delay = delay(for: identifier),
-                  inactivity.isDue(app.processIdentifier, delay: delay, at: now)
-            else { continue }
+        let due = scheduler.takeDue(in: snapshot(), delay: delay(for:))
+        for scheduled in due {
+            guard let app = applications.first(where: { $0.processIdentifier == scheduled.pid }) else { continue }
             // hide() returns false on macOS 26 even when the application hides, so check isHidden instead.
             app.hide()
-            inactivity.focus(app.processIdentifier)
             Task { @MainActor [weak self] in
                 try? await Task.sleep(for: .milliseconds(200))
                 guard let self, !app.isTerminated, !app.isActive else { return }
@@ -136,8 +122,8 @@ final class FocusController {
                     self.hideFailure = nil
                     self.spin()
                 } else {
-                    self.hideFailure = "Could not hide \(app.localizedName ?? identifier)."
-                    self.inactivity.leave(app.processIdentifier, at: ProcessInfo.processInfo.systemUptime)
+                    self.hideFailure = "Could not hide \(app.localizedName ?? scheduled.bundleIdentifier)."
+                    self.scheduler.handle(.failedToHide(app.processIdentifier), in: self.snapshot())
                 }
             }
         }
