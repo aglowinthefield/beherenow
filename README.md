@@ -45,7 +45,8 @@ To explicitly request an ad-hoc development build (fish compatible):
 env MU_SIGN_IDENTITY=- sh scripts/build-app
 ```
 
-The app icon is drawn in `Resources/AppIcon.svg`. After editing it, run `sh scripts/icon`
+The app icon is `Resources/AppIcon.jpg` on the white tile in `Resources/AppIcon.svg`.
+After changing either, run `sh scripts/icon`
 to regenerate the committed `Resources/AppIcon.icns`. This needs `rsvg-convert`
 (`brew install librsvg`); building the app does not.
 
