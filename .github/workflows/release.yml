@@ -37,17 +37,12 @@ jobs:
           security default-keychain -d user -s "$keychain"
           rm "$RUNNER_TEMP/cert.p12"
 
-      - name: Store notary credentials
-        env:
-          APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
-          TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
-          APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
-        run: xcrun notarytool store-credentials ci --keychain "$RUNNER_TEMP/release.keychain-db" --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD"
-
       - name: Build, sign and notarize
         env:
           MU_SIGN_IDENTITY: ${{ secrets.SIGN_IDENTITY }}
-          MU_NOTARY_PROFILE: ci
+          NOTARY_APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          NOTARY_TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          NOTARY_APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
         run: sh scripts/release
 
       - name: Publish GitHub release
