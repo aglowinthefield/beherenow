@@ -33,7 +33,8 @@ jobs:
           printf '%s' "$CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
           security import "$RUNNER_TEMP/cert.p12" -k "$keychain" -P "$CERT_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s -k "$password" "$keychain"
-          security list-keychains -d user -s "$keychain" login.keychain-db
+          security list-keychains -d user -s "$keychain"
+          security default-keychain -d user -s "$keychain"
           rm "$RUNNER_TEMP/cert.p12"
 
       - name: Store notary credentials
@@ -41,7 +42,7 @@ jobs:
           APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
           TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
           APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
-        run: xcrun notarytool store-credentials ci --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD"
+        run: xcrun notarytool store-credentials ci --keychain "$RUNNER_TEMP/release.keychain-db" --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD"
 
       - name: Build, sign and notarize
         env:
