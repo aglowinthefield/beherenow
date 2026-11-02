@@ -9,19 +9,25 @@ release_zip_tmp="build/BeHereNow-release-tmp.zip"
 mkdir -p build
 rm -f "$release_zip"
 
-if [ "${MU_NOTARY_PROFILE+x}" = x ]; then
-    profile="$MU_NOTARY_PROFILE"
-elif [ -f "$HOME/.config/mu/notary-profile" ]; then
-    profile="$(cat "$HOME/.config/mu/notary-profile")"
+# CI passes credentials directly; locally a notarytool keychain profile is used.
+if [ -n "${NOTARY_APPLE_ID:-}" ] && [ -n "${NOTARY_TEAM_ID:-}" ] && [ -n "${NOTARY_APP_PASSWORD:-}" ]; then
+    notary() { xcrun notarytool "$@" --apple-id "$NOTARY_APPLE_ID" --team-id "$NOTARY_TEAM_ID" --password "$NOTARY_APP_PASSWORD"; }
 else
-    echo "error: set MU_NOTARY_PROFILE or ~/.config/mu/notary-profile to a notarytool keychain profile" >&2
-    exit 2
+    if [ "${MU_NOTARY_PROFILE+x}" = x ]; then
+        profile="$MU_NOTARY_PROFILE"
+    elif [ -f "$HOME/.config/mu/notary-profile" ]; then
+        profile="$(cat "$HOME/.config/mu/notary-profile")"
+    else
+        echo "error: set MU_NOTARY_PROFILE or ~/.config/mu/notary-profile to a notarytool keychain profile" >&2
+        exit 2
+    fi
+    if [ -z "$profile" ]; then
+        echo "error: notary profile is empty" >&2
+        exit 2
+    fi
+    notary() { xcrun notarytool "$@" --keychain-profile "$profile"; }
 fi
-if [ -z "$profile" ]; then
-    echo "error: notary profile is empty" >&2
-    exit 2
-fi
-xcrun notarytool history --keychain-profile "$profile" >/dev/null
+notary history >/dev/null
 sh scripts/build-app
 if ! codesign -dvvv "$app" 2>&1 | awk '
     /Authority=Developer ID Application:/ { found = 1 }
@@ -33,7 +39,7 @@ fi
 codesign --verify --deep --strict "$app"
 trap 'rm -f "$submission_zip" "$release_zip_tmp"' 0 1 2 15
 ditto -c -k --keepParent --sequesterRsrc "$app" "$submission_zip"
-result="$(xcrun notarytool submit "$submission_zip" --keychain-profile "$profile" --wait --output-format json)"
+result="$(notary submit "$submission_zip" --wait --output-format json)"
 status="$(printf '%s' "$result" | plutil -extract status raw -o - -)"
 if [ "$status" != "Accepted" ]; then
     echo "error: notarization was not accepted" >&2
