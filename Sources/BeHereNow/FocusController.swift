@@ -19,6 +19,16 @@ final class FocusController {
             if zazenMode { hideExpiredApplications() }
         }
     }
+    /// When true, nothing hides. Resuming gives every background application a fresh delay.
+    var paused: Bool {
+        didSet {
+            defaults.set(paused, forKey: "paused")
+            if !paused && oldValue {
+                scheduler.handle(.woke, in: snapshot())
+                if zazenMode { hideExpiredApplications() }
+            }
+        }
+    }
     private(set) var applications: [NSRunningApplication] = []
     private(set) var hideFailure: String?
     /// Menu bar icon rotation in degrees. Each hide turns it a further 180°.
@@ -40,6 +50,7 @@ final class FocusController {
             }
         neverHide = Set(defaults.stringArray(forKey: "neverHideApplications") ?? [])
         zazenMode = defaults.bool(forKey: "zazenMode")
+        paused = defaults.bool(forKey: "paused")
         refresh()
         scheduler.handle(.woke, in: snapshot())
         let workspace = NSWorkspace.shared
@@ -110,6 +121,7 @@ final class FocusController {
     }
 
     private func hideExpiredApplications() {
+        guard !paused else { return }
         let due = scheduler.takeDue(in: snapshot(), delay: delay(for:))
         for scheduled in due {
             guard let app = applications.first(where: { $0.processIdentifier == scheduled.pid }) else { continue }

@@ -11,6 +11,7 @@ struct BeHereNowApp: App {
         } label: {
             // MenuBarExtra labels don't animate, so the controller steps the angle frame by frame.
             Image(nsImage: yinYangImage(rotatedBy: controller.iconAngle))
+                .opacity(controller.paused ? 0.4 : 1)
                 .accessibilityLabel("Be Here Now")
         }
         Settings {
@@ -24,6 +25,7 @@ private struct FocusMenu: View {
     @Environment(\.openSettings) private var openSettings
 
     var body: some View {
+        Toggle("Paused", isOn: $controller.paused)
         Toggle("Zazen mode", isOn: $controller.zazenMode)
         Button("Settings…") {
             openSettings()
@@ -52,6 +54,11 @@ private struct DelaySettings: View {
     var body: some View {
         Form {
             LoginItemSection()
+            Section {
+                Toggle("Paused", isOn: $controller.paused)
+            } footer: {
+                Text("Stop hiding applications until resumed. Resuming restarts every delay.")
+            }
             Section {
                 Toggle("Zazen mode", isOn: $controller.zazenMode)
             } footer: {
