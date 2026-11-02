@@ -7,3 +7,4 @@
 - **Never hide**: a per-application rule that keeps the application visible, even in Zazen mode.
 - **Zazen mode**: hides applications as soon as they lose focus, ignoring all delays.
 - **Hide scheduler**: the module (`HideScheduler`) that tracks each application's delay from workspace events and reports which applications are due to hide.
+- **Pause**: stops all hiding until resumed. Resuming starts a fresh delay for every background application.
