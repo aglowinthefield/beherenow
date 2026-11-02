@@ -77,18 +77,24 @@ Keychain credentials. It requires Developer ID signing, checks Apple's submissio
 status is `Accepted`, validates the stapled ticket, and checks Gatekeeper before
 creating `build/BeHereNow.zip`. Rebuilding the app requires notarizing it again.
 
-To publish a release, bump `VERSION`, commit, then (fish compatible):
+To publish a release, bump `VERSION`, merge it, then (fish compatible):
 
 ```fish
-sh scripts/release
-set version (cat VERSION)
-git tag v$version; and git push origin v$version
-gh release create v$version build/BeHereNow.zip --title "Be Here Now $version"
+git tag v(cat VERSION); and git push origin v(cat VERSION)
 ```
 
-Then update `version` and `sha256` in `Casks/be-here-now.rb` in
+The Release workflow (`.github/workflows/release.yml`) builds, signs and notarizes
+the app, creates the GitHub release, and updates the cask in
 [aglowinthefield/homebrew-tap](https://github.com/aglowinthefield/homebrew-tap).
-`shasum -a 256 build/BeHereNow.zip` prints the checksum.
+It needs these repository secrets: `DEVELOPER_ID_CERT_P12` (base64 of the exported
+Developer ID Application certificate), `DEVELOPER_ID_CERT_PASSWORD`, `SIGN_IDENTITY`
+(the certificate's full name), `NOTARY_APPLE_ID`, `NOTARY_TEAM_ID`,
+`NOTARY_APP_PASSWORD` (an app-specific password), and `TAP_TOKEN` (a token with
+write access to the tap repo).
+
+To release by hand instead, run `sh scripts/release`, create the release with
+`gh release create`, and update `version` and `sha256` in `Casks/be-here-now.rb`
+(`shasum -a 256 build/BeHereNow.zip` prints the checksum).
 
 ### Manual verification
 

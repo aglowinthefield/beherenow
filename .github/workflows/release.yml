@@ -1,0 +1,71 @@
+name: Release
+
+# Push a tag like v0.2.0 (matching VERSION) to build, notarize, publish and update the Homebrew tap.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # build-app derives the build number from the commit count
+
+      - name: Check tag matches VERSION
+        run: |
+          [ "${GITHUB_REF_NAME}" = "v$(cat VERSION)" ] || { echo "tag ${GITHUB_REF_NAME} does not match VERSION $(cat VERSION)"; exit 1; }
+
+      - name: Import signing certificate
+        env:
+          CERT_P12: ${{ secrets.DEVELOPER_ID_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.DEVELOPER_ID_CERT_PASSWORD }}
+        run: |
+          keychain="$RUNNER_TEMP/release.keychain-db"
+          password="$(uuidgen)"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 3600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          printf '%s' "$CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$keychain" -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -s -k "$password" "$keychain"
+          security list-keychains -d user -s "$keychain" login.keychain-db
+          rm "$RUNNER_TEMP/cert.p12"
+
+      - name: Store notary credentials
+        env:
+          APPLE_ID: ${{ secrets.NOTARY_APPLE_ID }}
+          TEAM_ID: ${{ secrets.NOTARY_TEAM_ID }}
+          APP_PASSWORD: ${{ secrets.NOTARY_APP_PASSWORD }}
+        run: xcrun notarytool store-credentials ci --apple-id "$APPLE_ID" --team-id "$TEAM_ID" --password "$APP_PASSWORD"
+
+      - name: Build, sign and notarize
+        env:
+          MU_SIGN_IDENTITY: ${{ secrets.SIGN_IDENTITY }}
+          MU_NOTARY_PROFILE: ci
+        run: sh scripts/release
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" build/BeHereNow.zip \
+            --title "Be Here Now $(cat VERSION)" --generate-notes
+
+      - name: Update Homebrew tap
+        env:
+          GH_TOKEN: ${{ secrets.TAP_TOKEN }}
+        run: |
+          sha="$(shasum -a 256 build/BeHereNow.zip | cut -d' ' -f1)"
+          git clone "https://x-access-token:${GH_TOKEN}@github.com/aglowinthefield/homebrew-tap.git" "$RUNNER_TEMP/tap"
+          cd "$RUNNER_TEMP/tap"
+          sed -i '' -e "s/^  version \".*\"/  version \"$(cat "$GITHUB_WORKSPACE/VERSION")\"/" \
+                    -e "s/^  sha256 \".*\"/  sha256 \"$sha\"/" Casks/be-here-now.rb
+          git diff --stat
+          git -c user.name="github-actions[bot]" -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -am "be-here-now $(cat "$GITHUB_WORKSPACE/VERSION")"
+          git push
