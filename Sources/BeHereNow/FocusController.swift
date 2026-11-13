@@ -110,14 +110,48 @@ final class FocusController {
     }
 
     private func snapshot() -> WorkspaceSnapshot {
-        WorkspaceSnapshot(
-            frontmost: NSWorkspace.shared.frontmostApplication?.processIdentifier,
+        let frontmost = NSWorkspace.shared.frontmostApplication?.processIdentifier
+        let displays = Self.activeDisplays()
+        return WorkspaceSnapshot(
+            frontmost: frontmost,
+            frontmostDisplay: frontmost.flatMap { Self.display(ofFrontWindowOf: $0, among: displays) },
+            displays: Set(displays),
             applications: applications.compactMap { app in
                 guard !app.isTerminated, let identifier = app.bundleIdentifier else { return nil }
                 return ScheduledApp(pid: app.processIdentifier, bundleIdentifier: identifier, isHidden: app.isHidden)
             },
             now: ProcessInfo.processInfo.systemUptime
         )
+    }
+
+    private nonisolated static func activeDisplays() -> [DisplayID] {
+        var count: UInt32 = 0
+        guard CGGetActiveDisplayList(0, nil, &count) == .success, count > 0 else { return [] }
+        var displays = [CGDirectDisplayID](repeating: 0, count: Int(count))
+        guard CGGetActiveDisplayList(count, &displays, &count) == .success else { return [] }
+        return Array(displays.prefix(Int(count)))
+    }
+
+    /// The display that holds most of the application's front window. Reading window bounds
+    /// needs no screen recording permission.
+    private nonisolated static func display(ofFrontWindowOf pid: Int32, among displays: [DisplayID]) -> DisplayID? {
+        guard let windows = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
+                as? [[String: Any]] else { return nil }
+        // The list runs front to back. Layer 0 holds normal windows.
+        guard let window = windows.first(where: {
+                  ($0[kCGWindowOwnerPID as String] as? Int32) == pid && ($0[kCGWindowLayer as String] as? Int) == 0
+              }),
+              let boundsInfo = window[kCGWindowBounds as String] as? NSDictionary,
+              let bounds = CGRect(dictionaryRepresentation: boundsInfo as CFDictionary),
+              let display = displays.max(by: { overlap(bounds, $0) < overlap(bounds, $1) }),
+              overlap(bounds, display) > 0
+        else { return nil }
+        return display
+    }
+
+    private nonisolated static func overlap(_ bounds: CGRect, _ display: DisplayID) -> CGFloat {
+        let shared = bounds.intersection(CGDisplayBounds(display))
+        return shared.isNull ? 0 : shared.width * shared.height
     }
 
     private func hideExpiredApplications() {
